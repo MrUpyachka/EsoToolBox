@@ -1,5 +1,10 @@
+-- Measurement functionality for distance/speed.
 UpyachkaToolBox.Measurements = {}
 UpyachkaToolBox.Measurements.Speed = {}
+--[[
+    TODO list
+    # Recalculate PositionsNumber after update of attribute which affects it .
+    ]]--
 
 -- For speed and other measurement.
 UpyachkaToolBox.Settings.Measurements = {}
@@ -55,10 +60,7 @@ function UpyachkaToolBox.Measurements.Speed.calculate()
     return totalDistance / UpyachkaToolBox.Settings.Measurements.SpeedTimeSpan
 end
 
---[[
-    Chat commands to update measurement attributes.
-]] --
-SLASH_COMMANDS["/measurement"] = function(attributeName, value)
+local function updateAttribute(attributeName, value)
     switch(string.lower(attributeName)) {
         [string.lower("DistanceCoefficient")] = function() UpyachkaToolBox.Settings.Measurements.DistanceCoefficient = value end,
         [string.lower("Interval")] = function() UpyachkaToolBox.Settings.Measurements.Interval = value end,
@@ -66,3 +68,7 @@ SLASH_COMMANDS["/measurement"] = function(attributeName, value)
         default = function() d("Wrong measurement attribute: " + attributeName) end
     }
 end
+--[[
+    Chat commands to update measurement attributes.
+]] --
+SLASH_COMMANDS["/measurement"] = updateAttribute

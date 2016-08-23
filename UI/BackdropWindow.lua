@@ -1,8 +1,8 @@
--- Window with background.
+-- Window with background and internal wrapper for content.
 BackdropWindow = {}
 
-function BackdropWindow:new(id, container, backdrop)
-	instance = {ID = id, Container = container, Backdrop = backdrop}
-	self.__index = self
-	return setmetatable(instance, self)
+function BackdropWindow:new(id, root, backdrop, container)
+    instance = { ID = id, Root = root, Backdrop = backdrop, Container = container }
+    self.__index = self
+    return setmetatable(instance, self)
 end

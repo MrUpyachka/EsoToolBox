@@ -15,7 +15,7 @@ UpyachkaToolBox.lua
 PlayerPositionsStorage.lua
 UpyachkaToolBoxMeasurements.lua
 
-BackdropWindow.lua
-UpyachkaUiTools.lua
-UpyachkaUiFactory.lua
+UI/BackdropWindow.lua
+UI/UpyachkaUiTools.lua
+UI/UpyachkaUiFactory.lua
 UpyachkaToolBoxWindow.lua

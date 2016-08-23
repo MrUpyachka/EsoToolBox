@@ -8,6 +8,27 @@ UpyachkaToolBox.Settings.UI.Position.Default = {
 
 UpyachkaToolBox.UI = {}
 
+-- Count of stolen items. TODO other place
+local stolenItemsCount = 0
+
+
+local function countStolenItems()
+    local bagCache = SHARED_INVENTORY:GenerateFullSlotData(nil, BAG_BACKPACK)
+    stolenItemsCount = 0
+    for key, data in pairs(bagCache) do
+        if (data.stolen) then
+            stolenItemsCount = stolenItemsCount + data.stackCount
+        end
+    end
+end
+
+local function handleItemIfStolen(bagId, slotId, isNewItem, itemSoundCategory, inventoryUpdateReason, stackCountChange)
+    countStolenItems()
+end
+
+EVENT_MANAGER:RegisterForEvent(UpyachkaToolBox.name .. "_stolenItemHandler", EVENT_INVENTORY_SINGLE_SLOT_UPDATE, handleItemIfStolen)
+
+
 local function checkPostition(position, default)
     if position.offsetX == nil then
         position.offsetX = defaultPosition.offsetX
@@ -22,8 +43,8 @@ function UpyachkaToolBox.UI.createFloatingWindow()
     UpyachkaToolBox.Settings.UI = ZO_SavedVars:New("UpyachkaToolBoxWindowSettings", 1, nil, UpyachkaToolBox.Settings.UI)
 
     local padding = 11
-    UpyachkaToolBox.UI.Window = UpyachkaUiFactory.createShadowWindow(id, padding)
-    local window = UpyachkaToolBox.UI.Window.Container
+    UpyachkaToolBox.UI.Window = UpyachkaUiFactory.createShadowWindow("UpyachkaToolBoxWindow", padding)
+    local window = UpyachkaToolBox.UI.Window.Root
 
     local defaultPosition = UpyachkaToolBox.Settings.UI.Position.Default
     local position = UpyachkaToolBox.Settings.UI.Position.Actual
@@ -31,7 +52,8 @@ function UpyachkaToolBox.UI.createFloatingWindow()
 
     window:SetAnchor(TOPLEFT, GuiRoot, TOPLEFT, position.offsetX, position.offsetY)
 
-    window:SetMovable(true)
+    UpyachkaToolBox.UI.Window.Backdrop:SetMovable(true)
+    UpyachkaToolBox.UI.Window.Root:SetMovable(true)
     local function onMoveStop(self)
         local position = UpyachkaToolBox.Settings.UI.Position.Actual
         position.offsetX = self:GetLeft()
@@ -40,9 +62,9 @@ function UpyachkaToolBox.UI.createFloatingWindow()
 
     window:SetHandler("OnMoveStop", onMoveStop)
 
-    local container = UpyachkaUiTools.getContainer(parent)
+    local container = UpyachkaUiTools.getContainer(UpyachkaToolBox.UI.Window)
     UpyachkaToolBox.UI.Window.PositionLabel = UpyachkaUiFactory.createNormalLabel("PositionLabel", container)
-    local positionLabel = UpyachkaToolBox.UI.Window.Label
+    local positionLabel = UpyachkaToolBox.UI.Window.PositionLabel
     positionLabel:SetText("Position")
     positionLabel:SetAnchor(TOPLEFT, container, TOPLEFT, 0, 0)
 
@@ -51,6 +73,10 @@ function UpyachkaToolBox.UI.createFloatingWindow()
     speedLabel:SetText("Speed")
     speedLabel:SetAnchor(TOPLEFT, positionLabel, BOTTOMLEFT, 0, 0)
 
+    UpyachkaToolBox.UI.Window.ThiefLabel = UpyachkaUiFactory.createNormalLabel("ThiefLabel", container)
+    UpyachkaToolBox.UI.Window.ThiefLabel:SetAnchor(TOPLEFT, speedLabel, BOTTOMLEFT, 0, 0)
+
+    countStolenItems()
 end
 
 
@@ -70,6 +96,11 @@ local function onPlayerCheckSpeed()
     local speed = UpyachkaToolBox.Measurements.Speed.calculate()
     local speedString = tonumber(string.format("%.2f", speed))
     UpyachkaToolBox.UI.Window.SpeedLabel:SetText("Speed: " .. speedString)
+
+    -- TODO separate callback
+    local thiefLabel = UpyachkaToolBox.UI.Window.ThiefLabel
+    local limit, sold, _ = GetFenceSellTransactionInfo()
+    thiefLabel:SetText(string.format("Fence: %d + (%d) / %d", sold, stolenItemsCount, limit))
 end
 
 EVENT_MANAGER:RegisterForUpdate(UpyachkaToolBox.name, UpyachkaToolBox.Settings.Measurements.Interval, onPlayerCheckSpeed)
@@ -77,8 +108,8 @@ EVENT_MANAGER:RegisterForUpdate(UpyachkaToolBox.name, UpyachkaToolBox.Settings.M
 -- Check that compass visible and follows by its state.
 function hideWithCompass()
     if ZO_CompassFrame and UpyachkaToolBox.UI.Window then
-        UpyachkaToolBox.UI.Window:SetHidden(ZO_CompassFrame:IsHidden())
+        UpyachkaToolBox.UI.Window.Root:SetHidden(ZO_CompassFrame:IsHidden())
     end
 end
 
-EVENT_MANAGER:RegisterForUpdate(UpyachkaToolBox.name .. "", 100, hideWithCompass)
+EVENT_MANAGER:RegisterForUpdate(UpyachkaToolBox.name .. "VisibilityHandler", 100, hideWithCompass)
